@@ -42,7 +42,7 @@ class Parser
         $tokens = $this->mergeFirstBracketWherePossible($tokens);
 
         // Add @ symbols to indicate OR operator to entry before and after it
-        $tokens = $this->processOr($tokens);
+//        $tokens = $this->processOr($tokens);
 
         // Add + symbol for AND operator, but not if the end of the last token starts with )
 //        $tokens = $this->processAnd($tokens);
@@ -108,12 +108,28 @@ class Parser
             $current = $i;
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
-            if (strtolower($tokens[$current]) == ')') {
-                continue;
-            }
-
             if (strtolower($tokens[$next]) == ')') {
-                $toReturn[] = $tokens[$current] . ")";
+
+                $toProgress = 0;
+
+                for ($x = 0; $x < $tokenCount; $x++) {
+                    if ($tokens[((($next + $x) <= ($tokenCount - 1)) ? ($next + $x) : ($tokenCount - 1))] == ")") {
+                        $toProgress++;
+                        if (($next + $x) == $tokenCount - 1) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                $brackets = "";
+                for ($y = 0; $y < $toProgress; $y++) {
+                    $brackets .= ")";
+                }
+
+                $toReturn[] = $tokens[$current] . $brackets;
+                $i = ($i + $toProgress);
             } else {
                 $toReturn[] = $tokens[$current];
             }
@@ -245,15 +261,38 @@ class Parser
                 continue;
             }
 
-            if (strtolower($tokens[$next]) == 'and' || strtolower($tokens[$previous]) == 'and') {
-                if (substr($tokens[$current], -1) != ')') {
-                    $toReturn[] = "+" . $tokens[$current];
+            // If the next entry is AND
+            if (strtolower($tokens[$next]) == 'and') {
+                // Now we know we need to be adding an AND to this element
+
+                // If the last character of this entry is ), we're at the end of brackets
+                if ($this->lastCharacterOf($tokens[$current]) == ')') {
+                    // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making +(
+                    if ($this->firstCharacterOf($tokens[$current]) == '(') {
+                        $toReturn[] = "+" . $tokens[$current];
+                    } else {
+                        $toReturn[] = $tokens[$current];
+                    }
                 } else {
-                    $toReturn[] = $tokens[$current];
+                    $toReturn[] = "+" . $tokens[$current];
                 }
             } else {
-                $toReturn[] = $tokens[$i];
+                if (strtolower($tokens[$previous]) == 'and') {
+                    // If the previous entry is OR
+                    // Now we know we need to be adding an OR to this element
 
+                    // If the last character of this entry is (, we're at the start of brackets
+//                if ($this->firstCharacterOf($tokens[$current]) == '(') {
+//                    // Check if this first character is ). If so, its a complete thing and the + can go before the (, making +(
+////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
+//                        $toReturn[] = "+" . $tokens[$current];
+////                    }
+//                } else {
+                    $toReturn[] = "+" . $tokens[$current];
+//                }
+                } else {
+                    $toReturn[] = $tokens[$i];
+                }
             }
         }
 
@@ -289,15 +328,18 @@ class Parser
                     // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making @(
                     if ($this->firstCharacterOf($tokens[$current]) == '(') {
                         $toReturn[] = "@" . $tokens[$current];
+                    } else {
+                        $toReturn[] = $tokens[$current];
                     }
                 } else {
                     $toReturn[] = "@" . $tokens[$current];
                 }
-            } else if (strtolower($tokens[$previous]) == 'or') {
-                // If the previous entry is OR
-                // Now we know we need to be adding an OR to this element
+            } else {
+                if (strtolower($tokens[$previous]) == 'or') {
+                    // If the previous entry is OR
+                    // Now we know we need to be adding an OR to this element
 
-                // If the last character of this entry is (, we're at the start of brackets
+                    // If the last character of this entry is (, we're at the start of brackets
 //                if ($this->firstCharacterOf($tokens[$current]) == '(') {
 //                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
 ////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
@@ -306,8 +348,9 @@ class Parser
 //                } else {
                     $toReturn[] = "@" . $tokens[$current];
 //                }
-            } else {
-                $toReturn[] = $tokens[$i];
+                } else {
+                    $toReturn[] = $tokens[$i];
+                }
             }
         }
 
