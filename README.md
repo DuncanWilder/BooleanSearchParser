@@ -54,3 +54,4 @@ Which will search for `sales` and `finance`, and rate results with `manager` as 
 |Input|Output|
 |-----|------|
 `"business development" or "it sales" and (danish or dutch or italian or denmark or holland or netherlands or italy)` | `"business development" +"it sales" +(danish dutch italian denmark holland netherlands italy)`
+`(procurement or buying or purchasing) and (marine or sea) and (engineering or engineer)` | `+(procurement buying purchasing) +(marine sea) +(engineering engineer)`
