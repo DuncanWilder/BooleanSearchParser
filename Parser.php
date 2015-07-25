@@ -19,14 +19,19 @@ class Parser
         $this->splitter = new Splitter();
     }
 
+    /**
+     * This will take a boolean search string, and will convert it into MySQL Fulltext
+     *
+     * @param $string
+     * @return null
+     */
     public function split($string) {
         $string = $this->firstClean($string);
 
         if (!$this->isBalanced($string) || !(substr_count($string, '"') % 2 == 0)) {
-            return 'INVALID';
+            return null;
         }
 
-//        $splitter = new Splitter;
         $tokens = $this->splitIntoTokens($string);
 
         // Quoted strings need to be untouched
@@ -47,20 +52,25 @@ class Parser
         // Add + symbol for AND operator, but not if the end of the last token starts with )
         $tokens = $this->processAnd($tokens);
 
+        // Change NOT's to -
         $tokens = $this->processNot($tokens);
+
+        // Add spaces back into the array
         $tokens = $this->addSpaces($tokens);
-        $tokens = $this->balanceParenthesis($tokens);
-//        $tokens = $this->processOr($tokens);
+
+        // Inside brackets should now be parsed fully, so lets recombine them
+        $tokens = $this->recombineParenthesis($tokens);
+
+        // Lets clear out the spaces again
         $tokens = $this->clearSpaces($tokens);
+
+        // And as everything is ANDed by default, lets add a + to whatever remains
         $tokens = $this->addPlus($tokens);
-//        $tokens = clearSpaces($tokens);
-//        $tokens = processAnd($tokens);
-//        $tokens = addSpaces($tokens);
+
+        // Lets clean everything up now and merge it all back together
         $resultString = $this->finalClean(implode(" ", $tokens));
 
         return trim($resultString);
-
-        dusodump([$string, $tokens, $resultString]);
     }
 
     /**
@@ -138,22 +148,40 @@ class Parser
         return $toReturn;
     }
 
-    private function isBalanced($s) {
-        $bal = 0;
-        for ($i = 0; $i < strlen($s); $i++) {
-            $ch = substr($s, $i, 1);
-            if ($ch == '(') {
-                $bal++;
+    /**
+     * Don't just count the brackets, make sure they're in order!
+     *
+     * @param $string
+     * @return bool
+     */
+    private function isBalanced($string) {
+        $balanced = 0;
+
+        for ($i = 0; $i < strlen($string); $i++) {
+            $character = substr($string, $i, 1);
+
+            if ($character == '(') {
+                $balanced++;
             } else {
-                if ($ch == ')') {
-                    $bal--;
+                if ($character == ')') {
+                    $balanced--;
                 }
             }
-            if ($bal < 0) return false;
+
+            if ($balanced < 0) {
+                return false;
+            }
         }
-        return ($bal == 0);
+
+        return ($balanced == 0);
     }
 
+    /**
+     * Split a string into an array of 'tokens'
+     *
+     * @param $string
+     * @return array
+     */
     private function splitIntoTokens($string) {
         $tokens = [];
         $token = "";
@@ -191,23 +219,13 @@ class Parser
         return $tokens;
     }
 
-    private function balanceTokenBrackets($tokens) {
-        $toReturn = [];
-        $token = "";
-
-        $string = implode(' ', $tokens);
-        $wordLength = strlen($string);
-
-        for ($i = 0; $i < $wordLength; $i++) {
-
-        }
-
-        return $toReturn;
-
-    }
-
-    private function balanceParenthesis($tokens) {
-//        return $tokens;
+    /**
+     * Merge parent bracket-groups into 1 token
+     *
+     * @param $tokens
+     * @return mixed
+     */
+    private function recombineParenthesis($tokens) {
         $token_count = count($tokens);
         $i = 0;
         while ($i < $token_count) {
@@ -218,14 +236,15 @@ class Parser
             $count = 1;
             for ($n = $i + 1; $n < $token_count; $n++) {
                 $token = $tokens[$n];
-//                die(var_export($token));
+
                 if (in_array($token, ['(', '+(', '@('])) {
                     $count++;
                 }
-//                if ($token === ')') {
+
                 if ($this->lastCharacterOf($token) == ')') {
                     $count = ($count - substr_count($token, ')'));
                 }
+
                 $tokens[$i] .= $token;
                 unset($tokens[$n]);
                 if ($count === 0) {
@@ -239,8 +258,13 @@ class Parser
         return array_values($tokens);
     }
 
+    /**
+     * Add + symbols to where no other action is being taken
+     *
+     * @param $tokens
+     * @return array
+     */
     private function addPlus($tokens) {
-//        dusodump($tokens);
         $toReturn = [];
 
         $tokenCount = count($tokens);
@@ -303,7 +327,6 @@ class Parser
                         for ($x = $current; $x > 0; $x--) {
                             $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
 
-//                            dusodump($tokens, $x, $tokens[$x], $toReturn);
                             if ($bracketCount == 0) {
                                 // $x must be the token where the corresponding bracket is
                                 $toReturn[$x - $removedOffset] = $characterToReplace . $toReturn[$x - $removedOffset];
@@ -320,16 +343,7 @@ class Parser
                 if (strtolower($tokens[$previous]) == $tokenToFind) {
                     // If the previous entry is OR
                     // Now we know we need to be adding an OR to this element
-
-                    // If the last character of this entry is (, we're at the start of brackets
-//                if ($this->firstCharacterOf($tokens[$current]) == '(') {
-//                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
-////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
-//                        $toReturn[] = $characterToReplace . $tokens[$current];
-////                    }
-//                } else {
                     $toReturn[] = $characterToReplace . $tokens[$current];
-//                }
                 } else {
                     $toReturn[] = $tokens[$i];
                 }
@@ -340,7 +354,7 @@ class Parser
     }
 
     /**
-     * Add @ symbols to indicate OR operator to entry before and after it
+     * If the next or previous entry is OR, as long as I'm not breaking out of brackets, add a @
      *
      * @param array $tokens
      * @return array
@@ -382,7 +396,6 @@ class Parser
                         for ($x = $current; $x > 0; $x--) {
                             $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
 
-//                            dusodump($tokens, $x, $tokens[$x], $toReturn);
                             if ($bracketCount == 0) {
                                 // $x must be the token where the corresponding bracket is
                                 $toReturn[$x - $removedOffset] = $characterToReplace . $toReturn[$x - $removedOffset];
@@ -397,18 +410,7 @@ class Parser
                 }
             } else {
                 if (strtolower($tokens[$previous]) == $tokenToFind) {
-                    // If the previous entry is OR
-                    // Now we know we need to be adding an OR to this element
-
-                    // If the last character of this entry is (, we're at the start of brackets
-//                if ($this->firstCharacterOf($tokens[$current]) == '(') {
-//                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
-////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
-//                        $toReturn[] = $characterToReplace . $tokens[$current];
-////                    }
-//                } else {
                     $toReturn[] = $characterToReplace . $tokens[$current];
-//                }
                 } else {
                     $toReturn[] = $tokens[$i];
                 }
@@ -418,6 +420,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Change NOT phrases into -'s
+     *
+     * @param $tokens
+     * @return array
+     */
     private function processNot($tokens) {
         $toReturn = [];
 
@@ -439,6 +447,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Remove all empty elements from an array
+     *
+     * @param $tokens
+     * @return array
+     */
     private function clearSpaces($tokens) {
         $toReturn = [];
 
@@ -451,6 +465,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * As long as the token isn't - or +, add a space between each element
+     *
+     * @param $tokens
+     * @return array
+     */
     private function addSpaces($tokens) {
         $toReturn = [];
 
@@ -464,6 +484,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Quoted strings wont be touched, so lets merge any relevant tokens
+     *
+     * @param $tokens
+     * @return mixed
+     */
     private function mergeQuotedStrings($tokens) {
         $token_count = count($tokens);
         $i = 0;
@@ -475,12 +501,11 @@ class Parser
             $count = 1;
             for ($n = $i + 1; $n < $token_count; $n++) {
                 $token = $tokens[$n];
-//            if ($token === '(') {
-//                $count++;
-//            }
+
                 if ($token === '"') {
                     $count--;
                 }
+
                 $tokens[$i] .= $token;
                 unset($tokens[$n]);
                 if ($count === 0) {
@@ -494,6 +519,12 @@ class Parser
         return array_values($tokens);
     }
 
+    /**
+     * First pass over the initial string to clean some elements
+     *
+     * @param $string
+     * @return string
+     */
     private function firstClean($string) {
         $string = str_ireplace('title:', ' ', $string);
         $string = str_replace(['{', '['], '(', $string);
@@ -510,9 +541,14 @@ class Parser
         return $string;
     }
 
+    /**
+     * Last run over the combined tokens to clean stuff up
+     *
+     * @param $string
+     * @return string
+     */
     private function finalClean($string) {
         $string = preg_replace('/\+{2,}/', '+', $string);
-//        $string = str_replace('+)', ')', $string);
         $string = str_replace(' )', ')', $string);
         $string = str_replace('( ', '(', $string);
         $string = str_replace(' - ', ' -', $string);
@@ -523,46 +559,23 @@ class Parser
         return $string;
     }
 
+    /**
+     * Get the last character of a string
+     *
+     * @param $string
+     * @return mixed
+     */
     private function lastCharacterOf($string) {
         return substr($string, -1);
     }
 
+    /**
+     * Get the first character of a string
+     *
+     * @param $string
+     * @return mixed
+     */
     private function firstCharacterOf($string) {
         return substr($string, 0, 1);
     }
-}
-
-function formatdump() { // Dushankow Überdümp
-    $argsNum = func_num_args();
-    ini_set('highlight.string', '#007700;font-style:italic;');
-    ini_set('highlight.keyword', '#0000FF;font-weight:bold;');
-    ini_set('highlight.default', 'orange');
-    ini_set('highlight.html', '#DD5500');
-    for ($i = 0; $i < $argsNum; $i++) {
-        $arg = func_get_arg($i);
-        echo '<pre style="background-color:#F6F6F6">' . (($argsNum > 0) ? '<strong style="display:inline-table;background-color:black;color:white;width:100%"> # ' . ($i + 1) . ' (' . gettype($arg) . ((gettype($arg) == 'array') ? '[' . count($arg) . ']' : '') . ')</strong>' . PHP_EOL : '');
-        if (is_array($arg) || is_object($arg)) {
-            $print_r = highlight_string("<?php " . var_export($arg, true) . " ?>", true);
-            $print_r = str_replace([
-                PHP_EOL,
-                '<span style="color: orange">&lt;?php&nbsp;</span>',
-                '<span style="color: orange">&lt;?php&nbsp;',
-                '<span style="color: orange">?&gt;</span>',
-                '?&gt;</span>'
-            ], ['', '', '<span style="color: orange">', '', '</span>'], $print_r);
-            $print_r = preg_replace('/=&gt;&nbsp;<br \/>(&nbsp;)+/', '=&gt;&nbsp;', $print_r);
-            $print_r = preg_replace('/array&nbsp;\(<br \/>(&nbsp;)+\)/', 'array()', $print_r);
-            echo $print_r;
-        } elseif (is_bool($arg)) {
-            var_dump($arg);
-        } else {
-            print_r($arg);
-        }
-        echo '</pre>' . PHP_EOL . PHP_EOL;
-    }
-}
-
-function dusodump() {
-    call_user_func_array('formatdump', func_get_args());
-    die;
 }
