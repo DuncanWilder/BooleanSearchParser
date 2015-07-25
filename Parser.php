@@ -41,8 +41,12 @@ class Parser
         // Now, if the next entry from a ( ends with ), then it must be the only thing in the bracket
         $tokens = $this->mergeFirstBracketWherePossible($tokens);
 
+        // Add @ symbols to indicate OR operator to entry before and after it
+        $tokens = $this->processOr($tokens);
+
+        // Add + symbol for AND operator, but not if the end of the last token starts with )
 //        $tokens = $this->processAnd($tokens);
-//        $tokens = $this->processOr($tokens);
+
 //        $tokens = $this->processNot($tokens);
 //        $tokens = $this->addSpaces($tokens);
 //        $tokens = $this->balanceParenthesis($tokens);
@@ -59,6 +63,12 @@ class Parser
         return [$string, $tokens, $resultString];
     }
 
+    /**
+     * If the next entry from a ( ends with ), then it must be the only thing in the bracket
+     *
+     * @param array $tokens
+     * @return array
+     */
     private function mergeFirstBracketWherePossible($tokens) {
         $toReturn = [];
 
@@ -83,6 +93,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Nothing gets appended, so )'s can be merged in with previous entry
+     *
+     * @param array $tokens
+     * @return array
+     */
     private function mergeLastBracket($tokens) {
         $toReturn = [];
 
@@ -209,22 +225,28 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * If the next or previous entry is an AND, as long as I'm not breaking out of brackets, add a +
+     *
+     * @param $tokens
+     * @return array
+     */
     private function processAnd($tokens) {
         $toReturn = [];
 
         $tokenCount = count($tokens);
 
         for ($i = 0; $i < $tokenCount; $i++) {
-            if (strtolower($tokens[$i]) == 'and') {
-                continue;
-            }
-
             $previous = (($i - 1) >= 0 ? $i - 1 : 0);
             $current = $i;
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
+            if (strtolower($tokens[$i]) == 'and') {
+                continue;
+            }
+
             if (strtolower($tokens[$next]) == 'and' || strtolower($tokens[$previous]) == 'and') {
-                if (substr($tokens[$current], 0, 1) != '+') {
+                if (substr($tokens[$current], -1) != ')') {
                     $toReturn[] = "+" . $tokens[$current];
                 } else {
                     $toReturn[] = $tokens[$current];
@@ -238,6 +260,12 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Add @ symbols to indicate OR operator to entry before and after it
+     *
+     * @param array $tokens
+     * @return array
+     */
     private function processOr($tokens) {
         $toReturn = [];
 
@@ -253,7 +281,14 @@ class Parser
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
             if (strtolower($tokens[$next]) == 'or' || strtolower($tokens[$previous]) == 'or') {
-                if (!in_array(substr($tokens[$current], 0, 1), ['@', ')'])) {
+                // Now we know we need to be adding an OR
+
+                // If the last character of this entry is ),
+
+                // If the last character of the previous or current entry is a ), we need to find the matching ( and prepend @ to it
+
+                // If its not a ), we can
+                if (substr($tokens[$previous], -1) != ')') {
                     $toReturn[] = "@" . $tokens[$current];
                 } else {
                     $toReturn[] = $tokens[$current];
@@ -360,12 +395,12 @@ class Parser
     }
 
     private function finalClean($string) {
-        $string = str_replace('++', '+', $string);
-        $string = str_replace('+)', ')', $string);
-        $string = str_replace(' )', ')', $string);
-        $string = str_replace('( ', '(', $string);
-        $string = str_replace(' - ', ' -', $string);
-        $string = preg_replace('/\s\s+/', ' ', $string);
+//        $string = str_replace('++', '+', $string);
+//        $string = str_replace('+)', ')', $string);
+//        $string = str_replace(' )', ')', $string);
+//        $string = str_replace('( ', '(', $string);
+//        $string = str_replace(' - ', ' -', $string);
+//        $string = preg_replace('/\s\s+/', ' ', $string);
 
         return $string;
     }
