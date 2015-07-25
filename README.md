@@ -8,6 +8,13 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 
 ## Goals
 * To provide a good-enough conversion
+* To not try and correct mistakes with brackets and quotes etc.
+
+## Todo
+- [x] @mentions, #refs, [links](), **formatting**, and <del>tags</del> are supported
+- [x] list syntax is required (any unordered or ordered list supported)
+- [x] this is a complete item
+- [ ] this is an incomplete item
 
 ## Examples
 
