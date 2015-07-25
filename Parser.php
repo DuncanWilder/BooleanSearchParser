@@ -50,17 +50,17 @@ class Parser
         $tokens = $this->processNot($tokens);
         $tokens = $this->addSpaces($tokens);
         $tokens = $this->balanceParenthesis($tokens);
-        $tokens = $this->processOr($tokens);
+//        $tokens = $this->processOr($tokens);
         $tokens = $this->clearSpaces($tokens);
 //        $tokens = addPlus($tokens);
 //        $tokens = clearSpaces($tokens);
 //        $tokens = processAnd($tokens);
 //        $tokens = addSpaces($tokens);
         $resultString = $this->finalClean(implode(" ", $tokens));
-//        $resultString = str_ireplace('@', '', $resultString);
+
         return trim($resultString);
 
-        return [$string, $tokens, $resultString];
+        dusodump([$string, $tokens, $resultString]);
     }
 
     /**
@@ -267,46 +267,67 @@ class Parser
      */
     private function processAnd($tokens) {
         $toReturn = [];
+        $tokenToFind = 'and';
+        $characterToReplace = '+';
 
         $tokenCount = count($tokens);
 
+        $removedOffset = 0;
+
         for ($i = 0; $i < $tokenCount; $i++) {
+            if (strtolower($tokens[$i]) == $tokenToFind) {
+                $removedOffset++;
+                continue;
+            }
+
             $previous = (($i - 1) >= 0 ? $i - 1 : 0);
             $current = $i;
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
-            if (strtolower($tokens[$i]) == 'and') {
-                continue;
-            }
-
-            // If the next entry is AND
-            if (strtolower($tokens[$next]) == 'and') {
-                // Now we know we need to be adding an AND to this element
+            // If the next entry is OR
+            if (strtolower($tokens[$next]) == $tokenToFind) {
+                // Now we know we need to be adding an OR to this element
 
                 // If the last character of this entry is ), we're at the end of brackets
                 if ($this->lastCharacterOf($tokens[$current]) == ')') {
-                    // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making +(
+                    // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making @(
                     if ($this->firstCharacterOf($tokens[$current]) == '(') {
-                        $toReturn[] = "+" . $tokens[$current];
+                        $toReturn[] = $characterToReplace . $tokens[$current];
                     } else {
+                        // Now we need to loop back through to find the token with the corresponding (
+                        // We must be at the end of a bracket set, so we have the number of closing brackets in this token
+                        // This tells us how many to find before we put the @ in
+                        $bracketCount = substr_count($tokens[$current], ')');
+
+                        for ($x = $current; $x >= 0; $x--) {
+                            $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
+
+//                            dusodump($tokens, $x, $tokens[$x], $toReturn);
+                            if ($bracketCount == 0) {
+                                // $x must be the token where the corresponding bracket is
+                                $toReturn[$x - $removedOffset] = $characterToReplace . $toReturn[$x - $removedOffset];
+                                break;
+                            }
+                        }
+
                         $toReturn[] = $tokens[$current];
                     }
                 } else {
-                    $toReturn[] = "+" . $tokens[$current];
+                    $toReturn[] = $characterToReplace . $tokens[$current];
                 }
             } else {
-                if (strtolower($tokens[$previous]) == 'and') {
+                if (strtolower($tokens[$previous]) == $tokenToFind) {
                     // If the previous entry is OR
                     // Now we know we need to be adding an OR to this element
 
                     // If the last character of this entry is (, we're at the start of brackets
 //                if ($this->firstCharacterOf($tokens[$current]) == '(') {
-//                    // Check if this first character is ). If so, its a complete thing and the + can go before the (, making +(
+//                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
 ////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
-//                        $toReturn[] = "+" . $tokens[$current];
+//                        $toReturn[] = $characterToReplace . $tokens[$current];
 ////                    }
 //                } else {
-                    $toReturn[] = "+" . $tokens[$current];
+                    $toReturn[] = $characterToReplace . $tokens[$current];
 //                }
                 } else {
                     $toReturn[] = $tokens[$i];
@@ -325,11 +346,16 @@ class Parser
      */
     private function processOr($tokens) {
         $toReturn = [];
+        $tokenToFind = 'or';
+        $characterToReplace = '@';
 
         $tokenCount = count($tokens);
 
+        $removedOffset = 0;
+
         for ($i = 0; $i < $tokenCount; $i++) {
-            if (strtolower($tokens[$i]) == 'or') {
+            if (strtolower($tokens[$i]) == $tokenToFind) {
+                $removedOffset++;
                 continue;
             }
 
@@ -338,36 +364,38 @@ class Parser
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
             // If the next entry is OR
-            if (strtolower($tokens[$next]) == 'or') {
+            if (strtolower($tokens[$next]) == $tokenToFind) {
                 // Now we know we need to be adding an OR to this element
 
                 // If the last character of this entry is ), we're at the end of brackets
                 if ($this->lastCharacterOf($tokens[$current]) == ')') {
                     // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making @(
                     if ($this->firstCharacterOf($tokens[$current]) == '(') {
-                        $toReturn[] = "@" . $tokens[$current];
+                        $toReturn[] = $characterToReplace . $tokens[$current];
                     } else {
                         // Now we need to loop back through to find the token with the corresponding (
                         // We must be at the end of a bracket set, so we have the number of closing brackets in this token
                         // This tells us how many to find before we put the @ in
                         $bracketCount = substr_count($tokens[$current], ')');
 
-                        for($x = $i; $x >= 0; $x--) {
+                        for ($x = $current; $x >= 0; $x--) {
                             $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
 
-                            if($bracketCount == 0) {
+//                            dusodump($tokens, $x, $tokens[$x], $toReturn);
+                            if ($bracketCount == 0) {
                                 // $x must be the token where the corresponding bracket is
-                                $toReturn[$x] = "@" . $toReturn[$x];
+                                $toReturn[$x - $removedOffset] = $characterToReplace . $toReturn[$x - $removedOffset];
+                                break;
                             }
                         }
 
                         $toReturn[] = $tokens[$current];
                     }
                 } else {
-                    $toReturn[] = "@" . $tokens[$current];
+                    $toReturn[] = $characterToReplace . $tokens[$current];
                 }
             } else {
-                if (strtolower($tokens[$previous]) == 'or') {
+                if (strtolower($tokens[$previous]) == $tokenToFind) {
                     // If the previous entry is OR
                     // Now we know we need to be adding an OR to this element
 
@@ -375,10 +403,10 @@ class Parser
 //                if ($this->firstCharacterOf($tokens[$current]) == '(') {
 //                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
 ////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
-//                        $toReturn[] = "@" . $tokens[$current];
+//                        $toReturn[] = $characterToReplace . $tokens[$current];
 ////                    }
 //                } else {
-                    $toReturn[] = "@" . $tokens[$current];
+                    $toReturn[] = $characterToReplace . $tokens[$current];
 //                }
                 } else {
                     $toReturn[] = $tokens[$i];
@@ -482,12 +510,14 @@ class Parser
     }
 
     private function finalClean($string) {
-//        $string = str_replace('++', '+', $string);
-//        $string = str_replace('+)', ')', $string);
-//        $string = str_replace(' )', ')', $string);
-//        $string = str_replace('( ', '(', $string);
-//        $string = str_replace(' - ', ' -', $string);
-//        $string = preg_replace('/\s\s+/', ' ', $string);
+        $string = str_replace('++', '+', $string);
+        $string = str_replace('+)', ')', $string);
+        $string = str_replace(' )', ')', $string);
+        $string = str_replace('( ', '(', $string);
+        $string = str_replace(' - ', ' -', $string);
+        $string = preg_replace('/\s\s+/', ' ', $string);
+        $string = str_ireplace('+@', '+', $string);
+        $string = str_ireplace('@', '', $string);
 
         return $string;
     }
