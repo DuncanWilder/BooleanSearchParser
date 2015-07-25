@@ -13,16 +13,16 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 
 |Input|Output|
 |-----|------|
-|'ict' | '+ict'|
-|'ict it' | '+ict +it'|
-|'ict OR it' | 'ict it'|
-|'NOT ict' | '-ict'|
-|'it NOT ict' | '+it -ict'|
-|'web AND (ict OR it)' | '+web +(ict it)'|
-|'ict OR (it AND web)' | 'ict (+it +web)'|
-|'ict NOT (ict AND it AND web)' | '+ict -(+ict +it +web)'|
-|'php OR (NOT web NOT embedded ict OR it)' | 'php (-web -embedded ict it)'|
-|'(web OR embedded) (ict OR it)' | '+(web embedded) +(ict it)'|
-|'develop AND (web OR (ict AND php))' | '+develop +(web (+ict +php))'|
-|'"ict' | '+"ict"'|
-|'"ict OR it"' | '+"ict OR it"'|
+|`ict` |   `+ict`|
+|`ict it` |   `+ict +it`|
+|`ict OR it` |   `ict it`|
+|`NOT ict` |   `-ict`|
+|`it NOT ict` |   `+it -ict`|
+|`web AND (ict OR it)` |   `+web +(ict it)`|
+|`ict OR (it AND web)` |   `ict (+it +web)`|
+|`ict NOT (ict AND it AND web)` |   `+ict -(+ict +it +web)`|
+|`php OR (NOT web NOT embedded ict OR it)` |   `php (-web -embedded ict it)`|
+|`(web OR embedded) (ict OR it)` |   `+(web embedded) +(ict it)`|
+|`develop AND (web OR (ict AND php))` |   `+develop +(web (+ict +php))`|
+|`"ict` |   `null `|
+|`"ict OR it"` |   `+"ict OR it"`|
