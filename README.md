@@ -10,12 +10,25 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 * To provide a good-enough conversion
 * To not try and correct mistakes with brackets and quotes etc.
 
+## Notes
+Order and brackets are important, with preference on the last operator between element *USUALLY* taking priority (more often than not, AND logic takes priority)
+
+`sales OR finance AND manager` will become `sales +finance +manager`
+
+effectively becoming `sales OR (finance AND manager)`
+
+### An example where AND takes priority
+
+`sales AND finance OR manager` will become `+sales +finance manager`
+
+effectively becoming `(sales AND finance) OR manager`
+
 ## Todo
 - [ ] Handle the * character
-- [ ] Add support for composer
+- [ ] Turn into a package that can be pulled in via composer
 - [ ] Move tests over to PHP Unit
 
-## Examples
+## Simple Examples
 
 |Input|Output|
 |-----|------|
@@ -32,3 +45,8 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 |`develop AND (web OR (ict AND php))` |   `+develop +(web (+ict +php))`|
 |`"ict` |   `null `|
 |`"ict OR it"` |   `+"ict OR it"`|
+
+## Complex Examples
+|Input|Output|
+|-----|------|
+`("Nursing Home" and (Manager OR Supervisor)) OR (commercial AND sales AND (manager OR management OR "team leader"))` | `+(+"nursing home" +(manager supervisor)) (+commercial +sales +(manager management "team leader"))`

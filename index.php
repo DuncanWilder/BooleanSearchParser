@@ -14,6 +14,7 @@ $parser = new \BooleanSearchParser\Parser();
 $start = grabtime();
 
 $testsAndResults = [
+    'sales and manager or executive' => '',
             'ict' => '+ict',
             'ict it' => '+ict +it',
             'ict OR it' => 'ict it',
