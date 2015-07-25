@@ -52,7 +52,7 @@ class Parser
         $tokens = $this->balanceParenthesis($tokens);
 //        $tokens = $this->processOr($tokens);
         $tokens = $this->clearSpaces($tokens);
-//        $tokens = addPlus($tokens);
+        $tokens = $this->addPlus($tokens);
 //        $tokens = clearSpaces($tokens);
 //        $tokens = processAnd($tokens);
 //        $tokens = addSpaces($tokens);
@@ -240,6 +240,7 @@ class Parser
     }
 
     private function addPlus($tokens) {
+//        dusodump($tokens);
         $toReturn = [];
 
         $tokenCount = count($tokens);
@@ -299,7 +300,7 @@ class Parser
                         // This tells us how many to find before we put the @ in
                         $bracketCount = substr_count($tokens[$current], ')');
 
-                        for ($x = $current; $x >= 0; $x--) {
+                        for ($x = $current; $x > 0; $x--) {
                             $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
 
 //                            dusodump($tokens, $x, $tokens[$x], $toReturn);
@@ -378,7 +379,7 @@ class Parser
                         // This tells us how many to find before we put the @ in
                         $bracketCount = substr_count($tokens[$current], ')');
 
-                        for ($x = $current; $x >= 0; $x--) {
+                        for ($x = $current; $x > 0; $x--) {
                             $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
 
 //                            dusodump($tokens, $x, $tokens[$x], $toReturn);
@@ -510,8 +511,8 @@ class Parser
     }
 
     private function finalClean($string) {
-        $string = str_replace('++', '+', $string);
-        $string = str_replace('+)', ')', $string);
+        $string = preg_replace('/\+{2,}/', '+', $string);
+//        $string = str_replace('+)', ')', $string);
         $string = str_replace(' )', ')', $string);
         $string = str_replace('( ', '(', $string);
         $string = str_replace(' - ', ' -', $string);
