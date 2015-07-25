@@ -42,16 +42,16 @@ class Parser
         $tokens = $this->mergeFirstBracketWherePossible($tokens);
 
         // Add @ symbols to indicate OR operator to entry before and after it
-//        $tokens = $this->processOr($tokens);
+        $tokens = $this->processOr($tokens);
 
         // Add + symbol for AND operator, but not if the end of the last token starts with )
-//        $tokens = $this->processAnd($tokens);
+        $tokens = $this->processAnd($tokens);
 
-//        $tokens = $this->processNot($tokens);
-//        $tokens = $this->addSpaces($tokens);
-//        $tokens = $this->balanceParenthesis($tokens);
-//        $tokens = $this->processOr($tokens);
-//        $tokens = $this->clearSpaces($tokens);
+        $tokens = $this->processNot($tokens);
+        $tokens = $this->addSpaces($tokens);
+        $tokens = $this->balanceParenthesis($tokens);
+        $tokens = $this->processOr($tokens);
+        $tokens = $this->clearSpaces($tokens);
 //        $tokens = addPlus($tokens);
 //        $tokens = clearSpaces($tokens);
 //        $tokens = processAnd($tokens);
@@ -191,22 +191,40 @@ class Parser
         return $tokens;
     }
 
+    private function balanceTokenBrackets($tokens) {
+        $toReturn = [];
+        $token = "";
+
+        $string = implode(' ', $tokens);
+        $wordLength = strlen($string);
+
+        for ($i = 0; $i < $wordLength; $i++) {
+
+        }
+
+        return $toReturn;
+
+    }
+
     private function balanceParenthesis($tokens) {
+//        return $tokens;
         $token_count = count($tokens);
         $i = 0;
         while ($i < $token_count) {
-            if ($tokens[$i] !== '(') {
+            if (!in_array($tokens[$i], ['(', '+(', '@('])) {
                 $i++;
                 continue;
             }
             $count = 1;
             for ($n = $i + 1; $n < $token_count; $n++) {
                 $token = $tokens[$n];
-                if ($token === '(' || $token === '+(') {
+//                die(var_export($token));
+                if (in_array($token, ['(', '+(', '@('])) {
                     $count++;
                 }
-                if ($token === ')') {
-                    $count--;
+//                if ($token === ')') {
+                if ($this->lastCharacterOf($token) == ')') {
+                    $count = ($count - substr_count($token, ')'));
                 }
                 $tokens[$i] .= $token;
                 unset($tokens[$n]);
@@ -329,6 +347,20 @@ class Parser
                     if ($this->firstCharacterOf($tokens[$current]) == '(') {
                         $toReturn[] = "@" . $tokens[$current];
                     } else {
+                        // Now we need to loop back through to find the token with the corresponding (
+                        // We must be at the end of a bracket set, so we have the number of closing brackets in this token
+                        // This tells us how many to find before we put the @ in
+                        $bracketCount = substr_count($tokens[$current], ')');
+
+                        for($x = $i; $x >= 0; $x--) {
+                            $bracketCount = ($bracketCount - substr_count($tokens[$x], '('));
+
+                            if($bracketCount == 0) {
+                                // $x must be the token where the corresponding bracket is
+                                $toReturn[$x] = "@" . $toReturn[$x];
+                            }
+                        }
+
                         $toReturn[] = $tokens[$current];
                     }
                 } else {
@@ -467,4 +499,39 @@ class Parser
     private function firstCharacterOf($string) {
         return substr($string, 0, 1);
     }
+}
+
+function formatdump() { // Dushankow Überdümp
+    $argsNum = func_num_args();
+    ini_set('highlight.string', '#007700;font-style:italic;');
+    ini_set('highlight.keyword', '#0000FF;font-weight:bold;');
+    ini_set('highlight.default', 'orange');
+    ini_set('highlight.html', '#DD5500');
+    for ($i = 0; $i < $argsNum; $i++) {
+        $arg = func_get_arg($i);
+        echo '<pre style="background-color:#F6F6F6">' . (($argsNum > 0) ? '<strong style="display:inline-table;background-color:black;color:white;width:100%"> # ' . ($i + 1) . ' (' . gettype($arg) . ((gettype($arg) == 'array') ? '[' . count($arg) . ']' : '') . ')</strong>' . PHP_EOL : '');
+        if (is_array($arg) || is_object($arg)) {
+            $print_r = highlight_string("<?php " . var_export($arg, true) . " ?>", true);
+            $print_r = str_replace([
+                PHP_EOL,
+                '<span style="color: orange">&lt;?php&nbsp;</span>',
+                '<span style="color: orange">&lt;?php&nbsp;',
+                '<span style="color: orange">?&gt;</span>',
+                '?&gt;</span>'
+            ], ['', '', '<span style="color: orange">', '', '</span>'], $print_r);
+            $print_r = preg_replace('/=&gt;&nbsp;<br \/>(&nbsp;)+/', '=&gt;&nbsp;', $print_r);
+            $print_r = preg_replace('/array&nbsp;\(<br \/>(&nbsp;)+\)/', 'array()', $print_r);
+            echo $print_r;
+        } elseif (is_bool($arg)) {
+            var_dump($arg);
+        } else {
+            print_r($arg);
+        }
+        echo '</pre>' . PHP_EOL . PHP_EOL;
+    }
+}
+
+function dusodump() {
+    call_user_func_array('formatdump', func_get_args());
+    die;
 }
