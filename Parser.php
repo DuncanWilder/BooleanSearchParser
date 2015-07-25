@@ -280,22 +280,34 @@ class Parser
             $current = $i;
             $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
-            if (strtolower($tokens[$next]) == 'or' || strtolower($tokens[$previous]) == 'or') {
-                // Now we know we need to be adding an OR
+            // If the next entry is OR
+            if (strtolower($tokens[$next]) == 'or') {
+                // Now we know we need to be adding an OR to this element
 
-                // If the last character of this entry is ),
-
-                // If the last character of the previous or current entry is a ), we need to find the matching ( and prepend @ to it
-
-                // If its not a ), we can
-                if (substr($tokens[$previous], -1) != ')') {
-                    $toReturn[] = "@" . $tokens[$current];
+                // If the last character of this entry is ), we're at the end of brackets
+                if ($this->lastCharacterOf($tokens[$current]) == ')') {
+                    // Check if this first character is (. If so, its a complete thing and the @ can go before the (, making @(
+                    if ($this->firstCharacterOf($tokens[$current]) == '(') {
+                        $toReturn[] = "@" . $tokens[$current];
+                    }
                 } else {
-                    $toReturn[] = $tokens[$current];
+                    $toReturn[] = "@" . $tokens[$current];
                 }
+            } else if (strtolower($tokens[$previous]) == 'or') {
+                // If the previous entry is OR
+                // Now we know we need to be adding an OR to this element
+
+                // If the last character of this entry is (, we're at the start of brackets
+//                if ($this->firstCharacterOf($tokens[$current]) == '(') {
+//                    // Check if this first character is ). If so, its a complete thing and the @ can go before the (, making @(
+////                    if ($this->lastCharacterOf($tokens[$current]) == ')') {
+//                        $toReturn[] = "@" . $tokens[$current];
+////                    }
+//                } else {
+                    $toReturn[] = "@" . $tokens[$current];
+//                }
             } else {
                 $toReturn[] = $tokens[$i];
-
             }
         }
 
@@ -405,4 +417,11 @@ class Parser
         return $string;
     }
 
+    private function lastCharacterOf($string) {
+        return substr($string, -1);
+    }
+
+    private function firstCharacterOf($string) {
+        return substr($string, 0, 1);
+    }
 }
