@@ -15,13 +15,13 @@ Order and brackets are important, with preference on the last operator between e
 
 `sales OR finance AND manager` will become `sales +finance +manager`
 
-effectively becoming `sales OR (finance AND manager)`
+Which will search for `finance` and `manager` and rate results with `sales` as higher.
 
 ### An example where AND takes priority
 
 `sales AND finance OR manager` will become `+sales +finance manager`
 
-effectively becoming `(sales AND finance) OR manager`
+Which will search for `sales` and `finance` and rate results with `manager` as higher.
 
 ## Todo
 - [ ] Handle the * character
