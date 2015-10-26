@@ -20,7 +20,7 @@ Order and brackets are important, more often than not OR logic takes priority
 `sales OR finance AND manager` will become `sales finance +manager` NOT `sales +finance +manager`
 
 ## Todo
-- [*] Handle the * character
+- [x] Handle the * character
 - [ ] Turn into a package that can be pulled in via composer
 - [ ] Move tests over to PHP Unit
 
