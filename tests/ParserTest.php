@@ -9,9 +9,6 @@
 namespace DuncanOgle\BooleanSearchParser;
 
 
-//require 'vendor/autoload.php';
-//require '/Parser.php';
-
 class ParserTest extends \PHPUnit_Framework_TestCase
 {
     public function testSimpleParsing() {
