@@ -1,0 +1,22 @@
+{
+    "name": "duncan/boolean-search-parser",
+    "description": "A way to translate Boolean Search logic into MySQL Fulltext Parameters",
+    "keywords": [
+        "mysql",
+        "boolean",
+        "fulltext",
+        "search",
+        "logic"
+    ],
+    "license": "unlicense",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Duncan Ogle",
+            "email": "duncanogle@outlook.com",
+            "homepage": "http://duncanogle.co.uk/"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}

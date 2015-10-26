@@ -6,10 +6,10 @@
  * Time: 11:18
  */
 
-include "Parser.php";
-include "Splitter/Splitter.php";
+include "src/Parser.php";
+include "src/Splitter.php";
 
-$parser = new \BooleanSearchParser\Parser();
+$parser = new \BooleanSearchParser\src\Parser();
 
 $start = grabtime();
 

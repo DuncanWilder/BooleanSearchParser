@@ -32,7 +32,7 @@
  * DAMAGE.
  */
 
-namespace BooleanSearchParser\Splitter;
+namespace BooleanSearchParser\src;
 
 
 class Splitter {
