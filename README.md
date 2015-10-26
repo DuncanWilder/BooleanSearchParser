@@ -1,5 +1,7 @@
 # BooleanSearchParser
 
+[![Build Status](https://travis-ci.org/DuncanOgle/BooleanSearchParser.svg?branch=master)](https://travis-ci.org/DuncanOgle/BooleanSearchParser)
+
 The aim of this class is to take a Boolean Search and to convert it into something that can be used in a MySQL Fulltext Search.
 
 The idea came about after recently working a lot with Boolean Search systems, and after reading [this StackOverflow question](http://stackoverflow.com/questions/16016723/is-there-a-good-php-library-available-to-parse-boolean-search-operators-to-mysql), nothing really exists out there for MySQL.
