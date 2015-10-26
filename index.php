@@ -15,12 +15,19 @@ $start = grabtime();
 
 $testsAndResults = [
 //            'sales and manager or executive' => '',
-            'ict' => '+ict',
-            'ict it' => '+ict +it',
-            'ict OR it' => 'ict it',
-            'NOT ict' => '-ict',
-            'it NOT ict' => '+it -ict',
-            'web AND (ict OR it)' => '+web +(ict it)',
+    'facilities manag* cool*' => '',
+    '(OR this AND that)' => '',
+    'HELLO or (AND this AND that)' => '',
+    'john-paul caffery' => '',
+    '"john-paul caffery" john-paul caffery' => '',
+    "HELLO or OR OR OR (AND this OR\t(that) \n \\ (AND this AND that)) AND £30,000 AND £30k-£50k 6gbp/s " => '',
+    '+ict -(+ict +it +web)' => '+ict -(+ict +it +web)',
+    'ict' => '+ict',
+    'ict it' => '+ict +it',
+    'ict OR it' => 'ict it',
+    'NOT ict' => '-ict',
+    'it NOT ict' => '+it -ict',
+    'web AND (ict OR it)' => '+web +(ict it)',
 //    'ict OR (it AND web)' => 'ict (+it +web)',
     'ict OR (it AND web)' => 'ict (+it +web)',
     'ict NOT (ict AND it AND web)' => '+ict -(+ict +it +web)',
@@ -38,7 +45,7 @@ $testsAndResults = [
     'Internal Audit Manager' => '+internal +audit +manager',
     'Audit Manager' => '+audit +manager',
     '"Infection Control"' => '+"infection control"',
-    '"Infection Control" -SOVA' => '+"infection control" -sova',
+    '"Infection* Control" -SOVA' => '+"infection control" -sova',
     'nurse' => '+nurse',
     'nurse -registered' => '+nurse -registered',
     'accounting' => '+accounting',
@@ -143,7 +150,7 @@ function formatdump() { // Dushankow Überdümp
                 '<span style="color: orange">&lt;?php&nbsp;</span>',
                 '<span style="color: orange">&lt;?php&nbsp;',
                 '<span style="color: orange">?&gt;</span>',
-                '?&gt;</span>'
+                '?&gt;</span>',
             ], ['', '', '<span style="color: orange">', '', '</span>'], $print_r);
             $print_r = preg_replace('/=&gt;&nbsp;<br \/>(&nbsp;)+/', '=&gt;&nbsp;', $print_r);
             $print_r = preg_replace('/array&nbsp;\(<br \/>(&nbsp;)+\)/', 'array()', $print_r);

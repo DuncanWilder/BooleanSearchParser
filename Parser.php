@@ -24,12 +24,6 @@ class Parser
 
     public function __construct() {
         $this->splitter = new Splitter();
-        // TODO: refactor to only use tokens (avoid merging)
-        // TODO: Handle * (only at end of PHRASE, not words, and never before a word
-        // TODO: Handle ~ operator
-        // TODO: Handle < and > operators
-        // TODO: look into how RAW types affect search
-        // TODO: handle operators at the start of brackets - (OR this AND that)
     }
 
     /**
@@ -44,7 +38,6 @@ class Parser
         $string = $this->firstClean($string);
 
         if (!(substr_count($string, '"') % 2 == 0)) {
-//            dusodump("unbalanced quotes");
             return null;
         }
 
@@ -54,18 +47,20 @@ class Parser
         $tokens = $this->mergeQuotedStrings($tokens);
 
         if (!$this->isBalanced($tokens)) {
-//            dusodump("unbalanced brackets");
             return null;
         }
 
+        // Clean the words of anything we dont want
+        $tokens = $this->secondClean($tokens);
+
+        // Any hyphenated words should be merged to they are taken as is (john-paul should be "john-paul" not +john -paul)
+        $tokens = $this->mergeHyphenatedWords($tokens);
+
+        // Merge any asterisk against the trailing word (not phrase)
+        $tokens = $this->processAsterisk($tokens);
+
         // Clear any empty entries - makes it easier to work with
         $tokens = $this->clearSpaces($tokens);
-
-        // Nothing gets appended, so )'s can be merged in with prior entry
-//        $tokens = $this->mergeLastBracket($tokens);
-
-        // Now, if the next entry from a ( ends with ), then it must be the only thing in the bracket
-//        $tokens = $this->mergeFirstBracketWherePossible($tokens);
 
         // Convert operators to tokens
         $tokens = $this->removeTrailingOperators($tokens);
@@ -78,7 +73,6 @@ class Parser
 
         // Change NOT's to -
         $tokens = $this->processNot($tokens);
-//        dusodump($tokens);
 
         // EVERYTHING AT THIS POINT SHOULD NOW HAVE CORRECT OPERATORS INFRONT OF THEM
         // At this point there may be multiple operators infront of a token. The next step is to prioritise these.
@@ -88,19 +82,6 @@ class Parser
         // Each token now has 0 or 1 operator(s) infront of it - anything that has 0 operators needs a "+"
         $tokens = $this->addMissingAndOperators($tokens);
 
-
-        // Add spaces back into the array
-//        $tokens = $this->addSpaces($tokens);
-
-        // Inside brackets should now be parsed fully, so lets recombine them
-//        $tokens = $this->recombineParenthesis($tokens);
-
-        // Lets clear out the spaces again
-//        $tokens = $this->clearSpaces($tokens);
-
-        // And as everything is ANDed by default, lets add a + to whatever remains
-//        $tokens = $this->addPlus($tokens);
-//        dusodump($string, $tokens);
         // Lets clean everything up now and merge it all back together
         $resultString = $this->finalClean(implode(" ", $tokens));
 
@@ -127,7 +108,91 @@ class Parser
         $string = preg_replace('/((\b-\s)|(\s-\s))/', ' ', $string);
         $string = preg_replace('/\s\s+/', ' ', $string);
 
-        return strtolower($string);
+        return strtolower(trim($string));
+    }
+
+
+    private function secondClean($tokens) {
+        $toReturn = [];
+
+        foreach ($tokens as $token) {
+            $token = $string = preg_replace('/[^a-zA-Z0-9 @\(\)\-\+\*\"\.]/', '', $token);
+            $toReturn[] = $token;
+        }
+
+        return $toReturn;
+    }
+
+    private function mergeHyphenatedWords($tokens) {
+        $toReturn = [];
+
+        $tokenCount = count($tokens);
+
+        if ($tokenCount < 3) {
+            return $tokens;
+        }
+
+        for ($i = 0; $i < $tokenCount; $i++) {
+            if ($i == 0 || $i == ($tokenCount - 1)) {
+                $toReturn[] = $tokens[$i];
+                continue; // We can't consider first or last tokens here..
+            }
+
+            $previous = $i - 1;
+            $current = $i;
+            $next = $i + 1;
+
+            // Because quotes are merged, lets make sure we dont touch these
+            // If the first character of the previous, current, or next entries begin with ", ignore
+            if (substr($tokens[$previous], 0, 1) == '"' || substr($tokens[$current], 0, 1) == '"' || substr($tokens[$next], 0, 1) == '"') {
+//                dusodump($tokens[$current]);
+                $toReturn[] = $tokens[$current];
+                continue;
+            }
+
+            if ($tokens[$current] == "-") {
+                if (trim($tokens[$previous]) != "" && trim($tokens[$next]) != "") {
+                    // The previous and next tokens aren't empty spaces, so this must be a hyphenated thingy
+                    array_pop($toReturn);
+                    array_push($toReturn, '"' . $tokens[$previous] . $tokens[$current] . $tokens[$next] . '"');
+                    $i++;
+                } else {
+                    $toReturn[] = $tokens[$current];
+                }
+            } else {
+                $toReturn[] = $tokens[$current];
+            }
+        }
+
+        return $toReturn;
+    }
+
+    private function processAsterisk($tokens) {
+        $toReturn = [];
+
+        $tokenCount = count($tokens);
+
+        for ($i = 0; $i < $tokenCount; $i++) {
+            if ($i == 0) {
+                $toReturn[] = $tokens[$i];
+                continue; // Ignore the first entry
+            }
+
+            $previous = $i - 1;
+            $current = $i;
+            $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
+
+            if ($tokens[$current] == "*") {
+                // If the current entry is an asterisk, then merge it with the previous entry
+                $lastEntry = array_pop($toReturn);
+                $toReturn[] = $lastEntry . $tokens[$current];
+                $i++;
+            } else {
+                $toReturn[] = $tokens[$current];
+            }
+        }
+
+        return $toReturn;
     }
 
     /**
