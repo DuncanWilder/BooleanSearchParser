@@ -12,12 +12,12 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 
 ## Notes
 ### Completion
-This is still in testing and now fully working yet. There's bug relating to brackets which need sorting!
+This is still in testing and not fully working yet - though it is in a state that should be usable by now.
 
 ### Regarding order
 Order and brackets are important, more often than not OR logic takes priority
 
-`sales OR finance AND manager` will become `sales finance +manager` NOT `sales +finance +manager`
+`sales OR finance AND manager` will become `sales finance +manager` and not `sales +finance +manager`
 
 ## Todo
 - [x] Handle the * character
