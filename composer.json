@@ -17,8 +17,7 @@
             "homepage": "http://duncanogle.co.uk/"
         }
     ],
-    "minimum-stability": "dev",
-    "preferred-install": "dev",
+    "minimum-stability": "stable",
     "require": {},
     "require-dev": {
         "phpunit/phpunit": "4.8.*"
