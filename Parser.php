@@ -75,11 +75,11 @@ class Parser
         $tokens = $this->processNot($tokens);
 
         // EVERYTHING AT THIS POINT SHOULD NOW HAVE CORRECT OPERATORS INFRONT OF THEM
-        // At this point there may be multiple operators infront of a token. The next step is to prioritise these.
+        // At this point there may be multiple operators in front of a token. The next step is to prioritise these.
         // If this "group" of operator tokens contains a "-", then remove all but this one, its top dog
         $tokens = $this->cleanStackedOperators($tokens);
 
-        // Each token now has 0 or 1 operator(s) infront of it - anything that has 0 operators needs a "+"
+        // Each token now has 0 or 1 operator(s) in front of it - anything that has 0 operators needs a "+"
         $tokens = $this->addMissingAndOperators($tokens);
 
         // Lets clean everything up now and merge it all back together
@@ -111,7 +111,13 @@ class Parser
         return strtolower(trim($string));
     }
 
-
+    /**
+     * We need to process each element in turn now and clean/sanitise it
+     *
+     * @param $tokens
+     *
+     * @return array
+     */
     private function secondClean($tokens) {
         $toReturn = [];
 
@@ -123,6 +129,13 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Because we don't want hyphenated words to be treated differently, lets merge them in quotes
+     *
+     * @param $tokens
+     *
+     * @return array
+     */
     private function mergeHyphenatedWords($tokens) {
         $toReturn = [];
 
@@ -145,7 +158,6 @@ class Parser
             // Because quotes are merged, lets make sure we dont touch these
             // If the first character of the previous, current, or next entries begin with ", ignore
             if (substr($tokens[$previous], 0, 1) == '"' || substr($tokens[$current], 0, 1) == '"' || substr($tokens[$next], 0, 1) == '"') {
-//                dusodump($tokens[$current]);
                 $toReturn[] = $tokens[$current];
                 continue;
             }
@@ -167,6 +179,13 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * Merge asterisks against the last entry
+     *
+     * @param $tokens
+     *
+     * @return array
+     */
     private function processAsterisk($tokens) {
         $toReturn = [];
 
@@ -178,9 +197,7 @@ class Parser
                 continue; // Ignore the first entry
             }
 
-            $previous = $i - 1;
             $current = $i;
-            $next = ((($i + 1) <= ($tokenCount - 1)) ? ($i + 1) : ($tokenCount - 1));
 
             if ($tokens[$current] == "*") {
                 // If the current entry is an asterisk, then merge it with the previous entry
@@ -198,7 +215,7 @@ class Parser
     /**
      * Don't just count the brackets, make sure they're in order!
      *
-     * @param $string
+     * @param $tokens
      *
      * @return bool
      */
@@ -341,6 +358,14 @@ class Parser
         return $tokens;
     }
 
+    /**
+     * After processing stuff, we might find operators stacked up against tokens, like "+++-manager"
+     * Lets clean them up here
+     *
+     * @param $tokens
+     *
+     * @return array
+     */
     private function cleanStackedOperators($tokens) {
         $toReturn = [];
 
@@ -383,6 +408,13 @@ class Parser
         return $toReturn;
     }
 
+    /**
+     * If a token has no operators in front of it by now, add an AND operator in front of it
+     *
+     * @param $tokens
+     *
+     * @return array
+     */
     private function addMissingAndOperators($tokens) {
         $toReturn = [];
 
@@ -400,10 +432,10 @@ class Parser
             } else {
                 // It item is not a operator, lets check that whatever before it has one
                 if (!in_array($tokens[$previous], [self::AND_TOKEN, self::OR_TOKEN, self::NOT_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN_CHARACTER])) {
-                    // does not have operator infront of it
+                    // does not have operator in front of it
                     array_push($toReturn, self::AND_TOKEN_CHARACTER, $tokens[$current]);
                 } else {
-                    // does have operator infront of it
+                    // does have operator in front of it
                     array_push($toReturn, $tokens[$current]);
                 }
             }
