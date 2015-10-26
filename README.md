@@ -15,20 +15,12 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 This is still in testing and now fully working yet. There's bug relating to brackets which need sorting!
 
 ### Regarding order
-Order and brackets are important, with preference on the last operator between element *USUALLY* taking priority (more often than not, AND logic takes priority)
+Order and brackets are important, more often than not OR logic takes priority
 
-`sales OR finance AND manager` will become `sales +finance +manager`
-
-Which will search for `finance` and `manager`, and rate results with `sales` as higher.
-
-#### An example where AND takes priority
-
-`sales AND finance OR manager` will become `+sales +finance manager`
-
-Which will search for `sales` and `finance`, and rate results with `manager` as higher.
+`sales OR finance AND manager` will become `sales finance +manager` NOT `sales +finance +manager`
 
 ## Todo
-- [ ] Handle the * character
+- [*] Handle the * character
 - [ ] Turn into a package that can be pulled in via composer
 - [ ] Move tests over to PHP Unit
 
@@ -53,5 +45,5 @@ Which will search for `sales` and `finance`, and rate results with `manager` as 
 ## Complex Examples
 |Input|Output|
 |-----|------|
-`"business development" or "it sales" and (danish or dutch or italian or denmark or holland or netherlands or italy)` | `"business development" +"it sales" +(danish dutch italian denmark holland netherlands italy)`
+`"business development" or "it sales" and (danish or dutch or italian or denmark or holland or netherlands or italy)` | `"business development" "it sales" +(danish dutch italian denmark holland netherlands italy)`
 `(procurement or buying or purchasing) and (marine or sea) and (engineering or engineer)` | `+(procurement buying purchasing) +(marine sea) +(engineering engineer)`
