@@ -4,17 +4,19 @@ php:
   - 5.4
   - 5.5
   - 5.6
-  - 7
+  - 7.0
   - hhvm
+  - hhvm-nightly
 
 before_script:
   - composer self-update
   - composer install --prefer-source --no-interaction --dev
 
-script: php index.php
+script: phpunit
 
 matrix:
   allow_failures:
-    - php: 5.6
+    - php: 7.0
     - php: hhvm
+    - php: hhvm-nightly
   fast_finish: true
