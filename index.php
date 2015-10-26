@@ -117,7 +117,7 @@ $toReturn = "<table border='1' cellspacing='0' style='font-family: monospace'><t
 
 $count = 0;
 foreach ($testsAndResults as $test => $expectedResult) {
-    $result = $parser->split($test);
+    $result = $parser->parse($test);
 //    dusodump($result);
 //            echo $test . " - " . $result . " - " . $expectedResult . "<br>";
 

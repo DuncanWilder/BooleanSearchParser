@@ -6,8 +6,7 @@
  * Time: 11:18
  */
 
-namespace BooleanSearchParser\src;
-
+namespace DuncanOgle\BooleanSearchParser;
 
 
 class Parser
@@ -32,7 +31,7 @@ class Parser
      *
      * @return null
      */
-    public function split($string) {
+    public function parse($string) {
         // Clean the string and make it all lowercase - we can save on this operation later making code cleaner
         $string = $this->firstClean($string);
 

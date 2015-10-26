@@ -32,13 +32,14 @@
  * DAMAGE.
  */
 
-namespace BooleanSearchParser\src;
+namespace DuncanOgle\BooleanSearchParser;
 
 
-class Splitter {
+class Splitter
+{
 
-    private static $splitters = array("\r\n", "!=", ">=", "<=", "<>", ":=", "\\", "&&", ">", "<", "|", "=", "^", "(",
-        ")", "\t", "\n", "'", "\"", "`", ",", "@", " ", "+", "-", "*", "/", ";");
+    private static $splitters = ["\r\n", "!=", ">=", "<=", "<>", ":=", "\\", "&&", ">", "<", "|", "=", "^", "(",
+        ")", "\t", "\n", "'", "\"", "`", ",", "@", " ", "+", "-", "*", "/", ";"];
     private $tokenSize;
     private $hashSet;
 

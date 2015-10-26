@@ -1,5 +1,5 @@
 {
-    "name": "duncan/boolean-search-parser",
+    "name": "duncanogle/boolean-search-parser",
     "description": "A way to translate Boolean Search logic into MySQL Fulltext Parameters",
     "keywords": [
         "mysql",
@@ -21,5 +21,10 @@
     "require": {},
     "require-dev": {
         "phpunit/phpunit": "4.8.*"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DuncanOgle\\BooleanSearchParser\\": "src"
+        }
     }
 }
