@@ -13,6 +13,14 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 * To not try and correct mistakes with brackets and quotes etc.
 
 ## Notes
+### Use
+```
+$parser = new \DuncanOgle\BooleanSearchParser\Parser();
+
+echo $parser->parse("ict OR (technology AND bob)");
+// ict (+technology +bob)
+```
+
 ### Regarding order
 Order and brackets are important, more often than not OR logic takes priority
 
