@@ -13,9 +13,6 @@ Big thanks goes to [PHP SQL Parser](https://github.com/soundintheory/php-sql-par
 * To not try and correct mistakes with brackets and quotes etc.
 
 ## Notes
-### Completion
-This is still in testing and not fully working yet - though it is in a state that should be usable by now.
-
 ### Regarding order
 Order and brackets are important, more often than not OR logic takes priority
 
@@ -23,8 +20,10 @@ Order and brackets are important, more often than not OR logic takes priority
 
 ## Todo
 - [x] Handle the * character
-- [ ] Turn into a package that can be pulled in via composer
-- [ ] Move tests over to PHP Unit
+- [x] Turn into a package that can be pulled in via composer
+- [x] Move tests over to PHP Unit
+- [ ] Add custom priority settings (currently its OR>AND>NOT)
+- [ ] Add optional word stemmer [like the one used here](https://github.com/ovaistariq/FULLTEXT-search-utility)
 
 ## Simple Examples
 

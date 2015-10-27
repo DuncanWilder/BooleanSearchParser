@@ -11,7 +11,7 @@ namespace DuncanOgle\BooleanSearchParser;
 
 class Parser
 {
-    var $splitter;
+    private $splitter;
 
     CONST AND_TOKEN = "and";
     CONST OR_TOKEN = "or";
