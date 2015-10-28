@@ -53,10 +53,10 @@ class Parser
 
         // Any hyphenated words should be merged to they are taken as is (john-paul should be "john-paul" not +john -paul)
         $tokens = $this->mergeHyphenatedWords($tokens);
-
+//dusodump($tokens);
         // Merge any asterisk against the trailing word (not phrase)
         $tokens = $this->processAsterisk($tokens);
-
+        dusodump($tokens);
         // Clear any empty entries - makes it easier to work with
         $tokens = $this->clearSpaces($tokens);
 
@@ -201,7 +201,6 @@ class Parser
                 // If the current entry is an asterisk, then merge it with the previous entry
                 $lastEntry = array_pop($toReturn);
                 $toReturn[] = $lastEntry . $tokens[$current];
-                $i++;
             } else {
                 $toReturn[] = $tokens[$current];
             }
