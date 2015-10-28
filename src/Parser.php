@@ -97,6 +97,7 @@ class Parser
         $string = str_ireplace('title:', ' ', $string);
         $string = str_replace(['{', '['], '(', $string);
         $string = str_replace(['}', ']'], ')', $string);
+        $string = str_replace(['“', '”'], '"', $string);
         $string = preg_replace('# +#s', ' ', $string);
         $string = preg_replace('#^\s+#m', '', $string);
         $string = preg_replace('#\s+$#m', '', $string);
