@@ -37,6 +37,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('+"john-paul caffery" +"john-paul" +caffery', $parser->parse('"john-paul caffery" john-paul caffery'));
         $this->assertEquals('+"procurement" +"source to pay" "supplier relationship management" "srm" +"vetting" +"compliance"', $parser->parse('"Procurement" and "source to pay" and "Supplier relationship management" or "SRM"  and "vetting" and "compliance"'));
         $this->assertEquals('(+"nursing home" +(manager supervisor)) (+commercial +sales +(manager management "team leader"))', $parser->parse('("Nursing Home" and (Manager OR Supervisor)) OR (commercial AND sales AND (manager OR management OR "team leader"))'));
-        $this->assertEquals('(“IT” AND security*) OR “security engineer*” OR (financial AND analyst* AND german)', $parser->parse('(+"it" +security*) "security engineer*" (+financial +analyst* +german)'));
+        $this->assertEquals('(â€œITâ€ AND security*) OR â€œsecurity engineer*â€ OR (financial AND analyst* AND german)', $parser->parse('(+"it" +security*) "security engineer*" (+financial +analyst* +german)'));
     }
 }
