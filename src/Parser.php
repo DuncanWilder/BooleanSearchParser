@@ -19,6 +19,8 @@ class Parser
     CONST AND_TOKEN_CHARACTER = "+";
     CONST OR_TOKEN_CHARACTER = "§"; // OR in MySQL is nothing, so we need to define a character that isn't commonly used
     CONST NOT_TOKEN_CHARACTER = "-";
+    CONST LEFT_BRACKET_TOKEN_CHARACTER = "(";
+    CONST RIGHT_BRACKET_TOKEN_CHARACTER = ")";
 
     public function __construct() {
         $this->splitter = new Splitter();
@@ -61,7 +63,7 @@ class Parser
         $tokens = $this->clearSpaces($tokens);
 
         // Convert operators to tokens
-        $tokens = $this->removeTrailingOperators($tokens);
+        $tokens = $this->removeLeadingTrailingOperators($tokens);
 
         // process OR keywords
         $tokens = $this->process($tokens, self::OR_TOKEN, self::OR_TOKEN_CHARACTER);
@@ -335,25 +337,31 @@ class Parser
     }
 
     /**
-     * Remove any trailing operators, we don't need them and they don't apply here
+     * Remove any leading or trailing operators, we don't need them and they don't apply here
+     * Also works within brackets
      *
      * @param $tokens
      *
      * @return mixed
      */
-    private function removeTrailingOperators($tokens) {
-        $processing = true;
+    private function removeLeadingTrailingOperators($tokens) {
+        $arrayTouched = false;
+        $stopOperators = [self::AND_TOKEN, self::OR_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER];
 
-        while ($processing) {
-            $element = array_pop($tokens);
-            if (!in_array($element, [self::AND_TOKEN, self::OR_TOKEN, self::NOT_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN_CHARACTER])) {
-                // We're at the end of it, return the rest including this one
-                array_push($tokens, $element);
-                $processing = false;
+        foreach($tokens as $key => $element) {
+            if(in_array($element, [self::AND_TOKEN, self::OR_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN, self::NOT_TOKEN_CHARACTER]) && (
+                    ((!isset($tokens[$key-1]) || (in_array($tokens[$key-1], $stopOperators) || $tokens[$key-1] === self::LEFT_BRACKET_TOKEN_CHARACTER)) && $element !== self::NOT_TOKEN && $element !== self::NOT_TOKEN_CHARACTER) ||
+                    (!isset($tokens[$key+1]) || (in_array($tokens[$key+1], $stopOperators) || $tokens[$key+1] === self::RIGHT_BRACKET_TOKEN_CHARACTER))
+                )) {
+                $arrayTouched = true;
+                unset($tokens[$key]);
+                if(($element === self::NOT_TOKEN || $element === self::NOT_TOKEN_CHARACTER) && isset($tokens[$key-1]) && in_array($tokens[$key-1], $stopOperators)) {
+                    unset($tokens[$key-1]);
+                }
             }
         }
 
-        return $tokens;
+        return $arrayTouched ? array_values($tokens) : $tokens;
     }
 
     /**

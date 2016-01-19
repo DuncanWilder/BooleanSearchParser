@@ -39,4 +39,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('(+"nursing home" +(manager supervisor)) (+commercial +sales +(manager management "team leader"))', $parser->parse('("Nursing Home" and (Manager OR Supervisor)) OR (commercial AND sales AND (manager OR management OR "team leader"))'));
         $this->assertEquals('(+"it" +security*) "security engineer*" (+financial +analyst* +german)', $parser->parse('(“IT” AND security*) OR “security engineer*” OR (financial AND analyst* AND german)'));
     }
+
+    public function testInvalidOperatorPosition() {
+        $parser = new Parser();
+
+        $this->assertEquals('+gevenducha', $parser->parse('and gevenducha'));
+        $this->assertEquals('+permonik', $parser->parse('not or permonik and'));
+        $this->assertEquals('-ochechula', $parser->parse('not ochechula and or not'));
+        $this->assertEquals('-(-pacmagos)', $parser->parse('not (not pacmagos)'));
+        $this->assertEquals('-(+fidlikant)', $parser->parse('not (or not and fidlikant) not'));
+        $this->assertEquals('+(+fuchtla)', $parser->parse('(fuchtla and not)'));
+        $this->assertEquals('(+svabliky) cinter', $parser->parse('(svabliky and not) or cinter'));
+    }
 }
