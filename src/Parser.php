@@ -31,9 +31,11 @@ class Parser
      *
      * @param $string
      *
+     * @param $default_operator     Choose AND or OR for multiword searches, defaults to AND
+     *
      * @return null
      */
-    public function parse($string) {
+    public function parse($string, $default_operator = 'AND') {
         // Clean the string and make it all lowercase - we can save on this operation later making code cleaner
         $string = $this->firstClean($string);
 
@@ -63,7 +65,7 @@ class Parser
         $tokens = $this->clearSpaces($tokens);
 
         // Convert operators to tokens
-        $tokens = $this->removeLeadingTrailingOperators($tokens);
+        $tokens = $this->removeLeadingTrailingOperators($tokens, $default_operator);
 
         // process OR keywords
         $tokens = $this->process($tokens, self::OR_TOKEN, self::OR_TOKEN_CHARACTER);
@@ -80,7 +82,7 @@ class Parser
         $tokens = $this->cleanStackedOperators($tokens);
 
         // Each token now has 0 or 1 operator(s) in front of it - anything that has 0 operators needs a "+"
-        $tokens = $this->addMissingAndOperators($tokens);
+        $tokens = $this->addMissingAndOperators($tokens, $default_operator);
 
         // Lets clean everything up now and merge it all back together
         $resultString = $this->finalClean(implode(" ", $tokens));
@@ -166,8 +168,15 @@ class Parser
             if ($tokens[$current] == "-") {
                 if (trim($tokens[$previous]) != "" && trim($tokens[$next]) != "") {
                     // The previous and next tokens aren't empty spaces, so this must be a hyphenated thingy
+                    if(strpos($toReturn[count($toReturn)-1], '-') !== false) {
+                        // Detect if there is already hyphen in toReturn and append to it
+                        $merged_str = rtrim($toReturn[count($toReturn)-1], '"');
+                        $merged_str = $merged_str . $tokens[$current] . $tokens[$next] . '"';
+                        $toReturn[count($toReturn)-1] = $merged_str;
+                    } else {
                     array_pop($toReturn);
                     array_push($toReturn, '"' . $tokens[$previous] . $tokens[$current] . $tokens[$next] . '"');
+                    }
                     $i++;
                 } else {
                     $toReturn[] = $tokens[$current];
@@ -344,11 +353,14 @@ class Parser
      *
      * @return mixed
      */
-    private function removeLeadingTrailingOperators($tokens) {
+    private function removeLeadingTrailingOperators($tokens, $default_operator) {
         $arrayTouched = false;
         $stopOperators = [self::AND_TOKEN, self::OR_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER];
 
         foreach($tokens as $key => $element) {
+            if($default_operator == 'OR' && $key === 0 && $element === self::AND_TOKEN_CHARACTER) {
+                continue;
+            }
             if(in_array($element, [self::AND_TOKEN, self::OR_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN, self::NOT_TOKEN_CHARACTER]) && (
                     ((!isset($tokens[$key-1]) || (in_array($tokens[$key-1], $stopOperators) || $tokens[$key-1] === self::LEFT_BRACKET_TOKEN_CHARACTER)) && $element !== self::NOT_TOKEN && $element !== self::NOT_TOKEN_CHARACTER) ||
                     (!isset($tokens[$key+1]) || (in_array($tokens[$key+1], $stopOperators) || $tokens[$key+1] === self::RIGHT_BRACKET_TOKEN_CHARACTER))
@@ -421,7 +433,7 @@ class Parser
      *
      * @return array
      */
-    private function addMissingAndOperators($tokens) {
+    private function addMissingAndOperators($tokens, $default_operator) {
         $toReturn = [];
 
         $tokenCount = count($tokens);
@@ -438,8 +450,15 @@ class Parser
             } else {
                 // It item is not a operator, lets check that whatever before it has one
                 if (!in_array($tokens[$previous], [self::AND_TOKEN, self::OR_TOKEN, self::NOT_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN_CHARACTER])) {
+
+
                     // does not have operator in front of it
-                    array_push($toReturn, self::AND_TOKEN_CHARACTER, $tokens[$current]);
+                    if($default_operator != 'OR') {
+                        array_push($toReturn, self::AND_TOKEN_CHARACTER, $tokens[$current]);
+                    } else {
+                        array_push($toReturn, self::OR_TOKEN_CHARACTER, $tokens[$current]);
+                    }
+
                 } else {
                     // does have operator in front of it
                     array_push($toReturn, $tokens[$current]);
