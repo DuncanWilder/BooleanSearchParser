@@ -1,1 +1,0 @@
-{"version":1,"defects":[],"times":{"DuncanOgle\\BooleanSearchParser\\ParserTest::testSimpleParsing":0.002,"DuncanOgle\\BooleanSearchParser\\ParserTest::testFailing":0,"DuncanOgle\\BooleanSearchParser\\ParserTest::testComplexParsing":0,"DuncanOgle\\BooleanSearchParser\\ParserTest::testInvalidOperatorPosition":0}}
