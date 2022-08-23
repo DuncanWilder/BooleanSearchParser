@@ -22,6 +22,8 @@ class Parser
     CONST LEFT_BRACKET_TOKEN_CHARACTER = "(";
     CONST RIGHT_BRACKET_TOKEN_CHARACTER = ")";
 
+    CONST ALL_OPERATORS = array(self::AND_TOKEN, self::OR_TOKEN, self::NOT_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN_CHARACTER, self::LEFT_BRACKET_TOKEN_CHARACTER, self::RIGHT_BRACKET_TOKEN_CHARACTER);
+
     public function __construct() {
         $this->splitter = new Splitter();
     }
@@ -31,7 +33,8 @@ class Parser
      *
      * @param $string
      *
-     * @param $default_operator     Choose AND or OR for multiword searches, defaults to AND
+     * @param $default_operator
+     * Choose AND or OR for multiword searches, defaults to AND
      *
      * @return null
      */
@@ -56,7 +59,7 @@ class Parser
         $tokens = $this->secondClean($tokens);
 
         // Any hyphenated words should be merged to they are taken as is (john-paul should be "john-paul" not +john -paul)
-        $tokens = $this->mergeHyphenatedWords($tokens);
+        $tokens = $this->mergeHyphenatedWords($tokens, $default_operator);
 
         // Merge any asterisk against the trailing word (not phrase)
         $tokens = $this->processAsterisk($tokens);
@@ -139,7 +142,7 @@ class Parser
      *
      * @return array
      */
-    private function mergeHyphenatedWords($tokens) {
+    private function mergeHyphenatedWords($tokens ,$default_operator) {
         $toReturn = [];
 
         $tokenCount = count($tokens);
@@ -175,7 +178,11 @@ class Parser
                         $toReturn[count($toReturn)-1] = $merged_str;
                     } else {
                     array_pop($toReturn);
+                    if($default_operator == 'OR') {
+                        array_push($toReturn, self::OR_TOKEN_CHARACTER, ' ', '"' . $tokens[$previous] . $tokens[$current] . $tokens[$next] . '"');
+                    } else {
                     array_push($toReturn, '"' . $tokens[$previous] . $tokens[$current] . $tokens[$next] . '"');
+                    }
                     }
                     $i++;
                 } else {
@@ -362,8 +369,11 @@ class Parser
                 continue;
             }
             if(in_array($element, [self::AND_TOKEN, self::OR_TOKEN, self::AND_TOKEN_CHARACTER, self::OR_TOKEN_CHARACTER, self::NOT_TOKEN, self::NOT_TOKEN_CHARACTER]) && (
+                (
                     ((!isset($tokens[$key-1]) || (in_array($tokens[$key-1], $stopOperators) || $tokens[$key-1] === self::LEFT_BRACKET_TOKEN_CHARACTER)) && $element !== self::NOT_TOKEN && $element !== self::NOT_TOKEN_CHARACTER) ||
                     (!isset($tokens[$key+1]) || (in_array($tokens[$key+1], $stopOperators) || $tokens[$key+1] === self::RIGHT_BRACKET_TOKEN_CHARACTER))
+                )
+             && !($default_operator == 'OR' && isset($tokens[$key+1]) && (!in_array($tokens[$key+1], self::ALL_OPERATORS)))
                 )) {
                 $arrayTouched = true;
                 unset($tokens[$key]);
@@ -453,7 +463,7 @@ class Parser
 
 
                     // does not have operator in front of it
-                    if($default_operator != 'OR') {
+                    if($default_operator != 'OR' OR substr($tokens[$current], 0,1) == '"') {
                         array_push($toReturn, self::AND_TOKEN_CHARACTER, $tokens[$current]);
                     } else {
                         array_push($toReturn, self::OR_TOKEN_CHARACTER, $tokens[$current]);
